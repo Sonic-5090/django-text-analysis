@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply rounded-none;
+  }
+  
+  body {
+    @apply text-black;
+    font-family: Arial, Helvetica, sans-serif;
+  }
+}
+
+@layer components {
+  .panel {
+    @apply bg-[#a5d6a7] border-2 border-[#666666] p-3;
+  }
+  
+  .input-field {
+    @apply w-full p-4 border-2 border-[#666666] bg-white text-lg;
+    @apply focus:outline-none focus:border-[#2e7d32];
+  }
+  
+  .btn {
+    @apply px-8 py-3 border-2 border-[#1565c0] bg-[#1976d2] text-white font-bold uppercase tracking-wide;
+    @apply hover:bg-[#1565c0] active:bg-[#0d47a1];
+    @apply cursor-pointer transition-colors;
+  }
+  
+  .btn-green {
+    @apply px-6 py-3 border-2 border-[#1b5e20] bg-[#2e7d32] text-white font-bold uppercase;
+    @apply hover:bg-[#1b5e20] active:bg-[#144517];
+    @apply cursor-pointer transition-colors;
+  }
+  
+  .btn-copyright {
+    @apply px-4 py-2 border-2 border-[#666666] bg-[#666666] text-white font-bold;
+    @apply hover:bg-[#444444] active:bg-[#333333];
+    @apply cursor-pointer transition-colors;
+  }
+  
+  .result-card {
+    @apply bg-white border-2 border-[#666666] p-3;
+  }
+  
+  .stat-row {
+    @apply flex justify-between py-1 border-b border-[#666666];
+  }
+  
+  .stat-label {
+    @apply text-[#1b5e20] font-semibold;
+  }
+  
+  .stat-value {
+    @apply font-bold text-black;
+  }
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Message Intent Analyzer{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    borderRadius: {
+                        none: '0px',
+                    },
+                    boxShadow: {
+                        none: 'none',
+                    },
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="{% load static %}{% static 'css/styles.css' %}">
+    <style>
+        * {
+            border-radius: 0 !important;
+            box-shadow: none !important;
+        }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-[#c8e6c9] min-h-screen flex flex-col">
+    <div class="max-w-3xl mx-auto p-2 flex-grow">
+        {% block content %}{% endblock %}
+    </div>
+    <div class="text-center pb-4">
+        <button class="btn-copyright" onclick="alert('Made by sonic-5090 - 2026')">
+            Copyright sonic-5090 2026
+        </button>
+    </div>
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

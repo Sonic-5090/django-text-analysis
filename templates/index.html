@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+
+{% block title %}Message Intent Analyzer{% endblock %}
+
+{% block content %}
+<header class="bg-[#2e7d32] border-2 border-[#666666] p-3 mb-2">
+    <h1 class="text-3xl font-bold text-white text-center tracking-wide">Message Intent Analyzer</h1>
+</header>
+
+<main class="space-y-2">
+    <!-- Input Panel -->
+    <div class="panel">
+        <h2 class="text-xl font-bold mb-2">Enter Your Message</h2>
+        
+        <textarea 
+            id="messageInput" 
+            class="input-field h-64 w-full text-lg resize-none" 
+            placeholder="Type your message here..."
+        ></textarea>
+        
+        <div class="mt-3 flex gap-3">
+            <button 
+                id="analyzeBtn" 
+                class="btn text-lg px-8 py-3"
+                onclick="analyzeMessage()"
+            >
+                ANALYZE MESSAGE
+            </button>
+            <button 
+                id="clearBtn" 
+                class="btn-green text-lg px-6 py-3"
+                onclick="clearMessage()"
+            >
+                CLEAR
+            </button>
+        </div>
+    </div>
+
+    <!-- Example Messages -->
+    <div class="panel">
+        <h3 class="text-base font-bold mb-2">Try an example:</h3>
+        <div class="flex flex-wrap gap-2">
+            {% for example in examples %}
+            <button 
+                class="btn-green text-base px-4 py-2"
+                onclick="setMessage('{{ example|escapejs }}')"
+            >
+                Example {{ forloop.counter }}
+            </button>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div id="loading" class="hidden panel text-center">
+        <p class="text-xl font-bold">Analyzing message...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div id="error" class="hidden panel bg-red-200 border-red-600">
+        <p id="errorText" class="text-red-800 font-bold"></p>
+    </div>
+
+    <!-- Result Panel -->
+    <div id="resultPanel" class="hidden">
+        <div class="result-card">
+            <h2 class="text-xl font-bold mb-3 border-b-2 border-[#666666] pb-2">Analysis Results</h2>
+            
+            <!-- Main Results -->
+            <div class="grid grid-cols-2 gap-3 mb-3">
+                <div class="panel bg-[#2e7d32] text-white">
+                    <p class="text-sm opacity-80">Recipient Type</p>
+                    <p id="recipientType" class="text-2xl font-bold text-white"></p>
+                </div>
+                <div class="panel bg-[#2e7d32] text-white">
+                    <p class="text-sm opacity-80">Relationship Closeness</p>
+                    <p id="closeness" class="text-2xl font-bold text-white"></p>
+                </div>
+            </div>
+
+            <!-- Confidence -->
+            <div class="mb-3">
+                <div class="flex justify-between items-center mb-1">
+                    <span class="text-base font-bold">Confidence Score:</span>
+                    <span id="confidence" class="text-xl font-bold text-[#2e7d32]"></span>
+                </div>
+                <div class="w-full h-6 border-2 border-[#666666]">
+                    <div id="confidenceBar" class="h-full bg-[#2e7d32]" style="width: 0%"></div>
+                </div>
+            </div>
+
+            <!-- Explanation -->
+            <div class="mb-3">
+                <p class="text-base font-bold mb-1">Explanation:</p>
+                <p id="explanation" class="text-lg"></p>
+            </div>
+
+            <!-- Breakdown -->
+            <div class="border-2 border-[#666666] p-3 bg-[#c8e6c9]">
+                <h3 class="text-base font-bold mb-2">Score Breakdown</h3>
+                <div class="stat-row">
+                    <span class="stat-label">Formality Score:</span>
+                    <span id="formalityScore" class="stat-value"></span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Formality Level:</span>
+                    <span id="formalityLevel" class="stat-value"></span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Emotional Score:</span>
+                    <span id="emotionalScore" class="stat-value"></span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Emotional Level:</span>
+                    <span id="emotionalLevel" class="stat-value"></span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Slang Score:</span>
+                    <span id="slangScore" class="stat-value"></span>
+                </div>
+                <div>
+                    <span class="stat-label">Slang Level:</span>
+                    <span id="slangLevel" class="stat-value"></span>
+                </div>
+            </div>
+
+            <!-- Try Another Button -->
+            <div class="mt-3">
+                <button class="btn-green w-full text-lg py-3" onclick="tryAnother()">
+                    Try Another Message
+                </button>
+            </div>
+        </div>
+    </div>
+
+    </main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function setMessage(text) {
+        document.getElementById('messageInput').value = text;
+    }
+
+    function clearMessage() {
+        document.getElementById('messageInput').value = '';
+        document.getElementById('resultPanel').classList.add('hidden');
+        document.getElementById('error').classList.add('hidden');
+    }
+
+    function tryAnother() {
+        clearMessage();
+        document.getElementById('messageInput').focus();
+    }
+
+    async function analyzeMessage() {
+        const message = document.getElementById('messageInput').value.trim();
+        
+        if (!message) {
+            showError('Please enter a message to analyze.');
+            return;
+        }
+
+        document.getElementById('resultPanel').classList.add('hidden');
+        document.getElementById('error').classList.add('hidden');
+        
+        document.getElementById('loading').classList.remove('hidden');
+        document.getElementById('analyzeBtn').disabled = true;
+
+        try {
+            const response = await fetch('/analyze/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ message: message })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Analysis failed');
+            }
+
+            displayResult(data);
+        } catch (error) {
+            showError(error.message);
+        } finally {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('analyzeBtn').disabled = false;
+        }
+    }
+
+    function displayResult(data) {
+        document.getElementById('recipientType').textContent = capitalizeFirst(data.recipient_type);
+        document.getElementById('closeness').textContent = data.closeness + ' - ' + data.closeness_label;
+        document.getElementById('confidence').textContent = data.confidence + '%';
+        document.getElementById('confidenceBar').style.width = data.confidence + '%';
+        document.getElementById('explanation').textContent = data.explanation;
+
+        const breakdown = data.breakdown;
+        document.getElementById('formalityScore').textContent = breakdown.formality_score;
+        document.getElementById('formalityLevel').textContent = formatLevel(breakdown.formality_level);
+        document.getElementById('emotionalScore').textContent = breakdown.emotional_score;
+        document.getElementById('emotionalLevel').textContent = formatLevel(breakdown.emotional_level);
+        document.getElementById('slangScore').textContent = breakdown.slang_score;
+        document.getElementById('slangLevel').textContent = formatLevel(breakdown.slang_level);
+
+        document.getElementById('resultPanel').classList.remove('hidden');
+    }
+
+    function showError(message) {
+        document.getElementById('errorText').textContent = message;
+        document.getElementById('error').classList.remove('hidden');
+    }
+
+    function capitalizeFirst(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    function formatLevel(level) {
+        return level.split('_').map(capitalizeFirst).join(' ');
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    document.getElementById('messageInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            analyzeMessage();
+        }
+    });
+</script>
+{% endblock %}
